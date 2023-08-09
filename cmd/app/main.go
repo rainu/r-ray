@@ -28,7 +28,7 @@ func main() {
 	}
 
 	userStore := store.NewUser()
-	for _, credential := range cfg.RequestCredentials {
+	for _, credential := range cfg.Credentials {
 		userStore.Add(credential.UsernameAndPassword())
 	}
 

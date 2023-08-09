@@ -10,12 +10,13 @@ import (
 type credential string
 
 type config struct {
-	BindingAddr           string       `required:"false" envconfig:"BINDING_ADDRESS"`
-	Debug                 bool         `required:"false" envconfig:"DEBUG"`
-	RequestHeaderPrefix   string       `required:"false" envconfig:"REQUEST_HEADER_PREFIX"`
-	RequestCredentials    []credential `required:"false" envconfig:"REQUEST_CREDENTIALS"`
-	ForwardRequestHeader  string       `required:"false" envconfig:"FORWARD_REQUEST_HEADER"`
-	ForwardResponseHeader string       `required:"false" envconfig:"FORWARD_RESPONSE_HEADER"`
+	BindingAddr string       `required:"false" envconfig:"BINDING_ADDRESS"`
+	Debug       bool         `required:"false" envconfig:"DEBUG"`
+	Credentials []credential `required:"false" envconfig:"CREDENTIALS"`
+
+	RequestHeaderPrefix   string `required:"false" envconfig:"REQUEST_HEADER_PREFIX"`
+	ForwardRequestHeader  string `required:"false" envconfig:"FORWARD_REQUEST_HEADER"`
+	ForwardResponseHeader string `required:"false" envconfig:"FORWARD_RESPONSE_HEADER"`
 
 	CorsAllowOrigin  []string `required:"false" envconfig:"CORS_ALLOW_ORIGIN"`
 	CorsAllowMethods []string `required:"false" envconfig:"CORS_ALLOW_METHODS"`
@@ -38,11 +39,11 @@ func readConfig() (*config, error) {
 		c.ForwardResponseHeader = c.RequestHeaderPrefix + "Forward-Response-Header"
 	}
 
-	if len(c.RequestCredentials) == 0 {
+	if len(c.Credentials) == 0 {
 		logrus.Warn("There are no user credentials configured!")
 	}
 
-	for _, c := range c.RequestCredentials {
+	for _, c := range c.Credentials {
 		if !strings.Contains(string(c), ":") {
 			return nil, fmt.Errorf("invalid credential: %s", c)
 		}
