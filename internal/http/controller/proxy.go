@@ -29,7 +29,7 @@ func NewProxy(headerPrefix, forwardRequestHeader, forwardResponseHeader string, 
 	}
 	result.preProcessing = []processingStep{
 		result.validateRequest,
-		result.checkAuthorization,
+		result.extractAuthorization,
 		result.compileForwardExpressions,
 		result.transferForwardRequestHeader,
 		result.transferRequestHeader,

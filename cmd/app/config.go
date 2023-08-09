@@ -13,7 +13,7 @@ type config struct {
 	BindingAddr           string       `required:"false" envconfig:"BINDING_ADDRESS"`
 	Debug                 bool         `required:"false" envconfig:"DEBUG"`
 	RequestHeaderPrefix   string       `required:"false" envconfig:"REQUEST_HEADER_PREFIX"`
-	RequestCredentials    []credential `required:"true" envconfig:"REQUEST_CREDENTIALS"`
+	RequestCredentials    []credential `required:"false" envconfig:"REQUEST_CREDENTIALS"`
 	ForwardRequestHeader  string       `required:"false" envconfig:"FORWARD_REQUEST_HEADER"`
 	ForwardResponseHeader string       `required:"false" envconfig:"FORWARD_RESPONSE_HEADER"`
 
@@ -36,6 +36,10 @@ func readConfig() (*config, error) {
 	}
 	if c.ForwardResponseHeader == "" {
 		c.ForwardResponseHeader = c.RequestHeaderPrefix + "Forward-Response-Header"
+	}
+
+	if len(c.RequestCredentials) == 0 {
+		logrus.Warn("There are no user credentials configured!")
 	}
 
 	for _, c := range c.RequestCredentials {

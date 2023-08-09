@@ -28,6 +28,10 @@ func (u *user) IsValid(username, password string) bool {
 	u.mutex.RLock()
 	defer u.mutex.RUnlock()
 
+	if len(u.user) == 0 {
+		return true
+	}
+
 	if pw, ok := u.user[username]; ok {
 		return pw == password
 	}

@@ -24,13 +24,15 @@ func (p *processor) Process(input Input) (Output, error) {
 		return Output{}, ErrUnauthorized
 	}
 
+	log := logrus.WithField("user", input.User.Username)
+
 	req, err := http.NewRequest(input.Method, input.URL, input.Body)
 	if err != nil {
 		return Output{}, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header = input.Header
 
-	logrus.
+	log.
 		WithField("header", req.Header).
 		WithField("method", req.Method).
 		WithField("url", req.URL).
@@ -41,7 +43,7 @@ func (p *processor) Process(input Input) (Output, error) {
 		return Output{}, fmt.Errorf("unable to do request: %w", err)
 	}
 
-	logrus.
+	log.
 		WithField("header", resp.Header).
 		WithField("method", input.Method).
 		WithField("url", input.URL).

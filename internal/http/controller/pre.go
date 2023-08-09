@@ -57,13 +57,8 @@ func (p *proxy) compileForwardExpressions(ctx *context) bool {
 	return true
 }
 
-func (p *proxy) checkAuthorization(ctx *context) bool {
-	var ok bool
-	ctx.input.User.Username, ctx.input.User.Password, ok = ctx.request.BasicAuth()
-	if !ok {
-		ctx.response.WriteHeader(http.StatusUnauthorized)
-		return false
-	}
+func (p *proxy) extractAuthorization(ctx *context) bool {
+	ctx.input.User.Username, ctx.input.User.Password, _ = ctx.request.BasicAuth()
 
 	return true
 }
