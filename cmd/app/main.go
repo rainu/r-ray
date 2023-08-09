@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	ihttp "github.com/rainu/r-ray/internal/http"
+	"github.com/rainu/r-ray/internal/http/controller"
 	"github.com/rainu/r-ray/internal/processor"
 	"github.com/rainu/r-ray/internal/store"
 	"github.com/sirupsen/logrus"
@@ -32,7 +33,8 @@ func main() {
 	}
 
 	p := processor.New(userStore)
-	server := ihttp.NewServer(cfg.BindingAddr, cfg.RequestHeaderPrefix, p)
+	h := controller.NewProxy(cfg.RequestHeaderPrefix, cfg.ForwardRequestHeader, cfg.ForwardResponseHeader, p)
+	server := ihttp.NewServer(cfg.BindingAddr, h)
 
 	errChan := make(chan error)
 	go func() {

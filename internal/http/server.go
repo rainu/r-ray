@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"github.com/rainu/r-ray/internal/http/controller"
 	"net/http"
 )
 
@@ -10,11 +9,11 @@ type server struct {
 	server http.Server
 }
 
-func NewServer(addr string, headerPrefix string, processor controller.Processor) *server {
+func NewServer(addr string, handler http.Handler) *server {
 	return &server{
 		server: http.Server{
 			Addr:    addr,
-			Handler: controller.NewProxy(headerPrefix, processor), //TODO: logging middleware
+			Handler: handler, //TODO: logging middleware
 		},
 	}
 }

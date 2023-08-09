@@ -32,5 +32,5 @@ func (u *user) IsValid(username, password string) bool {
 		return pw == password
 	}
 
-	return true
+	return false
 }

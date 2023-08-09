@@ -12,15 +12,20 @@ import (
 )
 
 type proxy struct {
-	headerPrefix string
+	headerPrefix          string
+	forwardRequestHeader  string
+	forwardResponseHeader string
 
 	processor Processor
 }
 
-func NewProxy(headerPrefix string, processor Processor) *proxy {
+func NewProxy(headerPrefix, forwardRequestHeader, forwardResponseHeader string, processor Processor) *proxy {
 	return &proxy{
-		headerPrefix: strings.ToLower(headerPrefix),
-		processor:    processor,
+		headerPrefix:          headerPrefix,
+		forwardRequestHeader:  forwardRequestHeader,
+		forwardResponseHeader: forwardResponseHeader,
+
+		processor: processor,
 	}
 }
 
@@ -53,9 +58,28 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: forward request headers...
+	//if frhValues := r.Header.Values(p.forwardRequestHeader); len(frhValues) != 0 {
+	//	//the client wants that the given header from this request will be forwarded to the target
+	//	for _, frhRegex := range frhValues {
+	//		for name, values := range r.Header {
+	//		if values := r.Header.Values(fwdHeader); len(values) != 0 {
+	//			input.Header[fwdHeader] = values
+	//		}
+	//	}
+	//}
+
+	// TODO: make small peaces of code
+
 	for name, values := range r.Header {
-		if !strings.HasPrefix(strings.ToLower(name), p.headerPrefix) {
+		if !strings.HasPrefix(strings.ToLower(name), strings.ToLower(p.headerPrefix)) {
 			//skip headers with no prefix
+			continue
+		}
+
+		if strings.ToLower(name) == strings.ToLower(p.forwardRequestHeader) ||
+			strings.ToLower(name) == strings.ToLower(p.forwardResponseHeader) {
+			//those are special headers and should not be transmitted
 			continue
 		}
 
@@ -81,6 +105,8 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
+
+	// TODO: forward response headers...
 
 	for name, values := range output.Header {
 		w.Header()[p.headerPrefix+name] = values
