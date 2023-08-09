@@ -37,7 +37,7 @@ Or you can download the release binaries: [here](https://github.com/rainu/r-ray/
 Or you can start this application as docker:
 
 ```bash
-docker pull ghcr.io/rainu/r-ray:main
+docker pull ghcr.io/rainu/r-ray
 ```
 
 # Usage
