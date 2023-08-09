@@ -70,7 +70,7 @@ jobs:
           GOOS: ${{ matrix.go-os }}
           GOARCH: ${{ matrix.go-arch }}
         run: |
-          BINARY=mqtt-shell-${{ matrix.go-os }}-${{ matrix.go-arch }}
+          BINARY=r-ray-${{ matrix.go-os }}-${{ matrix.go-arch }}
           if [ "$GOOS" = "windows" ]; then
             BINARY=$BINARY.exe
           fi
