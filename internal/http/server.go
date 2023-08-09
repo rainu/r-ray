@@ -13,7 +13,7 @@ func NewServer(addr string, handler http.Handler) *server {
 	return &server{
 		server: http.Server{
 			Addr:    addr,
-			Handler: handler, //TODO: logging middleware
+			Handler: loggingMiddleware{handler},
 		},
 	}
 }

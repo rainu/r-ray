@@ -16,6 +16,11 @@ type config struct {
 	RequestCredentials    []credential `required:"true" envconfig:"REQUEST_CREDENTIALS"`
 	ForwardRequestHeader  string       `required:"false" envconfig:"FORWARD_REQUEST_HEADER"`
 	ForwardResponseHeader string       `required:"false" envconfig:"FORWARD_RESPONSE_HEADER"`
+
+	CorsAllowOrigin  []string `required:"false" envconfig:"CORS_ALLOW_ORIGIN"`
+	CorsAllowMethods []string `required:"false" envconfig:"CORS_ALLOW_METHODS"`
+	CorsAllowHeaders []string `required:"false" envconfig:"CORS_ALLOW_HEADERS"`
+	CorsAllowMaxAge  int      `required:"false" envconfig:"CORS_ALLOW_MAX_AGE"`
 }
 
 func readConfig() (*config, error) {

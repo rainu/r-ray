@@ -33,8 +33,15 @@ func main() {
 	}
 
 	p := processor.New(userStore)
-	h := controller.NewProxy(cfg.RequestHeaderPrefix, cfg.ForwardRequestHeader, cfg.ForwardResponseHeader, p)
-	server := ihttp.NewServer(cfg.BindingAddr, h)
+	cors := ihttp.CorsMiddleware{
+		Delegate: controller.NewProxy(cfg.RequestHeaderPrefix, cfg.ForwardRequestHeader, cfg.ForwardResponseHeader, p),
+
+		Origins: cfg.CorsAllowOrigin,
+		Methods: cfg.CorsAllowMethods,
+		Headers: cfg.CorsAllowHeaders,
+		MaxAge:  cfg.CorsAllowMaxAge,
+	}
+	server := ihttp.NewServer(cfg.BindingAddr, cors)
 
 	errChan := make(chan error)
 	go func() {
