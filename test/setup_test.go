@@ -7,11 +7,13 @@ import (
 	"github.com/rainu/r-ray/internal/http/controller"
 	"github.com/rainu/r-ray/internal/processor"
 	"github.com/rainu/r-ray/internal/store"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"time"
 )
 
 const (
@@ -26,12 +28,14 @@ const (
 var (
 	testServer *httptest.Server
 	mock       func(w http.ResponseWriter, r *http.Request)
-	emptyMock  = func(w http.ResponseWriter, r *http.Request) {}
 	appPort    int
+	appBaseUrl string
 	shutdowner interface{ Shutdown(context.Context) error }
 )
 
 func init() {
+	logrus.SetLevel(logrus.DebugLevel)
+
 	testServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if mock != nil {
 			//call mock
@@ -39,6 +43,7 @@ func init() {
 		}
 	}))
 	appPort = freePort()
+	appBaseUrl = fmt.Sprintf("http://localhost:%d/", appPort)
 
 	userStore := store.NewUser()
 	userStore.Add(username, password)
@@ -50,6 +55,9 @@ func init() {
 
 	//start test server
 	go toTest.ListenAndServe()
+
+	//give some time to startup the proxy
+	time.Sleep(50 * time.Millisecond)
 }
 
 func freePort() int {
@@ -67,24 +75,24 @@ func freePort() int {
 	return listener.Addr().(*net.TCPAddr).Port
 }
 
-func rrayUrl(path string) string {
+func appUrl(path string) string {
 	return fmt.Sprintf(
-		"http://localhost:%d/?url=%s",
-		appPort,
+		"%s?url=%s",
+		appBaseUrl,
 		url.QueryEscape(testServer.URL+path),
 	)
 }
 
 func validRequest(method, url string, header http.Header, body io.Reader) *http.Request {
-	req, err := http.NewRequest(method, rrayUrl(url), body)
+	req, err := http.NewRequest(method, appUrl(url), body)
 	if err != nil {
 		panic(err)
 	}
 
-	req.SetBasicAuth(username, password)
 	if header != nil {
 		req.Header = header
 	}
+	req.SetBasicAuth(username, password)
 
 	return req
 }

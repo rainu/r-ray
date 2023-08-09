@@ -7,17 +7,16 @@ import (
 	"net/http"
 )
 
-type preProcessing func(http.ResponseWriter, *http.Request, *processor.Input) bool
-type postProcessing func(http.ResponseWriter, *http.Request, *processor.Input, *processor.Output, error) bool
+type processingStep func(*context) bool
 
 type proxy struct {
 	headerPrefix          string
 	forwardRequestHeader  string
 	forwardResponseHeader string
 
-	preProcessing  []preProcessing
+	preProcessing  []processingStep
 	processor      Processor
-	postProcessing []postProcessing
+	postProcessing []processingStep
 }
 
 func NewProxy(headerPrefix, forwardRequestHeader, forwardResponseHeader string, processor Processor) *proxy {
@@ -28,14 +27,17 @@ func NewProxy(headerPrefix, forwardRequestHeader, forwardResponseHeader string, 
 
 		processor: processor,
 	}
-	result.preProcessing = []preProcessing{
+	result.preProcessing = []processingStep{
 		result.validateRequest,
 		result.checkAuthentication,
+		result.compileForwardExpressions,
+		result.transferForwardRequestHeader,
 		result.transferRequestHeader,
 	}
-	result.postProcessing = []postProcessing{
+	result.postProcessing = []processingStep{
 		result.checkProcessingErrors,
 		result.transferResponseHeader,
+		result.transferForwardResponseHeader,
 		result.transferStatusCode,
 		result.copyBody,
 	}
@@ -49,27 +51,24 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Method: r.Method,
 		Body:   r.Body,
 	}
+	processingCtx := &context{
+		response: w,
+		request:  r,
+		input:    &input,
+	}
 
 	for _, preProcessingStep := range p.preProcessing {
-		if !preProcessingStep(w, r, &input) {
+		if !preProcessingStep(processingCtx) {
 			//the current step stops the processing
 			return
 		}
 	}
 
-	// TODO: forward request headers...
-	//if frhValues := r.Header.Values(p.forwardRequestHeader); len(frhValues) != 0 {
-	//	//the client wants that the given header from this request will be forwarded to the target
-	//	for _, frhRegex := range frhValues {
-	//		for name, values := range r.Header {
-	//		if values := r.Header.Values(fwdHeader); len(values) != 0 {
-	//			input.Header[fwdHeader] = values
-	//		}
-	//	}
-	//}
-
 	// do proxy call
-	output, err := p.processor.Process(input)
+	var output processor.Output
+	output, processingCtx.processError = p.processor.Process(input)
+	processingCtx.output = &output
+
 	defer func() {
 		if output.Body != nil {
 			if err := output.Body.Close(); err != nil {
@@ -79,13 +78,11 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	for _, postProcessingStep := range p.postProcessing {
-		if !postProcessingStep(w, r, &input, &output, err) {
+		if !postProcessingStep(processingCtx) {
 			//the current step stops the processing
 			return
 		}
 	}
-
-	// TODO: forward response headers...
 }
 
 func writeError(w http.ResponseWriter, err error) (int, error) {

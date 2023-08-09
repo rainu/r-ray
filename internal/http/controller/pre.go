@@ -2,44 +2,74 @@ package controller
 
 import (
 	"fmt"
-	"github.com/rainu/r-ray/internal/processor"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
-func (p *proxy) validateRequest(w http.ResponseWriter, r *http.Request, i *processor.Input) bool {
-	parsedUrl, err := url.ParseRequestURI(r.URL.Query().Get("url"))
+func (p *proxy) validateRequest(ctx *context) bool {
+	parsedUrl, err := url.ParseRequestURI(ctx.request.URL.Query().Get("url"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		writeError(w, fmt.Errorf("invalid url: %w", err))
+		ctx.response.WriteHeader(http.StatusBadRequest)
+		writeError(ctx.response, fmt.Errorf("invalid url: %w", err))
 		return false
 	}
 
 	if parsedUrl.Host == "" || !strings.HasPrefix(parsedUrl.Scheme, "http") {
-		w.WriteHeader(http.StatusBadRequest)
-		writeError(w, fmt.Errorf("invalid url"))
+		ctx.response.WriteHeader(http.StatusBadRequest)
+		writeError(ctx.response, fmt.Errorf("invalid url"))
 		return false
 	}
 
-	i.URL = parsedUrl.String()
+	ctx.input.URL = parsedUrl.String()
 
 	return true
 }
 
-func (p *proxy) checkAuthentication(w http.ResponseWriter, r *http.Request, i *processor.Input) bool {
+func (p *proxy) compileForwardExpressions(ctx *context) bool {
+	rawAllowExpressions := ctx.request.Header.Values(p.forwardRequestHeader)
+	ctx.forwardRequestExpressions = make([]*regexp.Regexp, len(rawAllowExpressions))
+
+	for i, expr := range rawAllowExpressions {
+		var err error
+		ctx.forwardRequestExpressions[i], err = regexp.Compile(expr)
+		if err != nil {
+			ctx.response.WriteHeader(http.StatusBadRequest)
+			writeError(ctx.response, fmt.Errorf("invalid forward request header expression: %w", err))
+			return false
+		}
+	}
+
+	rawAllowExpressions = ctx.request.Header.Values(p.forwardResponseHeader)
+	ctx.forwardResponseExpressions = make([]*regexp.Regexp, len(rawAllowExpressions))
+
+	for i, expr := range rawAllowExpressions {
+		var err error
+		ctx.forwardResponseExpressions[i], err = regexp.Compile(expr)
+		if err != nil {
+			ctx.response.WriteHeader(http.StatusBadRequest)
+			writeError(ctx.response, fmt.Errorf("invalid forward response header expression: %w", err))
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p *proxy) checkAuthentication(ctx *context) bool {
 	var ok bool
-	i.User.Username, i.User.Password, ok = r.BasicAuth()
+	ctx.input.User.Username, ctx.input.User.Password, ok = ctx.request.BasicAuth()
 	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
+		ctx.response.WriteHeader(http.StatusUnauthorized)
 		return false
 	}
 
 	return true
 }
 
-func (p *proxy) transferRequestHeader(w http.ResponseWriter, r *http.Request, i *processor.Input) bool {
-	for name, values := range r.Header {
+func (p *proxy) transferRequestHeader(ctx *context) bool {
+	for name, values := range ctx.request.Header {
 		if !strings.HasPrefix(strings.ToLower(name), strings.ToLower(p.headerPrefix)) {
 			//skip headers with no prefix
 			continue
@@ -52,7 +82,37 @@ func (p *proxy) transferRequestHeader(w http.ResponseWriter, r *http.Request, i 
 		}
 
 		header := name[len(p.headerPrefix):]
-		i.Header[header] = values
+		ctx.input.Header[header] = values
+	}
+
+	return true
+}
+
+func (p *proxy) transferForwardRequestHeader(ctx *context) bool {
+	// the client can define headers which should be transfer 1:1 to the target server
+	// for this the client can use the ForwardRequestHeader
+	// the values of this header are interpreted as regular expression
+
+	if len(ctx.forwardRequestExpressions) == 0 {
+		return true
+	}
+
+	for hName, hValues := range ctx.request.Header {
+		lhName := strings.ToLower(hName)
+
+		if lhName == strings.ToLower(p.forwardRequestHeader) ||
+			lhName == strings.ToLower(p.forwardResponseHeader) {
+			//those are special headers and should be ignored
+			continue
+		}
+
+		for _, expr := range ctx.forwardRequestExpressions {
+			if expr.MatchString(lhName) {
+				//this header should be forwarded
+				ctx.input.Header[hName] = hValues
+				break //dont need to check other expr.
+			}
+		}
 	}
 
 	return true
