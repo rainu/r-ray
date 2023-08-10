@@ -18,16 +18,16 @@ func TestValidationBadUrl(t *testing.T) {
 			expectedErr: `{"error":"invalid url: parse \"\": empty url"}`,
 		},
 		{
-			url:         appBaseUrl + "?url=",
-			expectedErr: `{"error":"invalid url: parse \"\": empty url"}`,
-		},
-		{
-			url:         appBaseUrl + "?url=/",
+			url:         appBaseUrl + "//",
 			expectedErr: `{"error":"invalid url"}`,
 		},
 		{
-			url:         appBaseUrl + "?url=brOken",
-			expectedErr: `{"error":"invalid url: parse \"brOken\": invalid URI for request"}`,
+			url:         appBaseUrl + "/brOken",
+			expectedErr: `{"error":"invalid url"}`,
+		},
+		{
+			url:         appBaseUrl + "http://host:port/test",
+			expectedErr: `{"error":"invalid url: parse \"http://host:port/test\": invalid port \":port\" after host"}`,
 		},
 	}
 

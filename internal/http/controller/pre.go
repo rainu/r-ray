@@ -9,7 +9,14 @@ import (
 )
 
 func (p *proxy) validateRequest(ctx *context) bool {
-	parsedUrl, err := url.ParseRequestURI(ctx.request.URL.Query().Get("url"))
+	targetUrl, err := url.PathUnescape(strings.TrimPrefix(ctx.request.RequestURI, "/"))
+	if err != nil {
+		ctx.response.WriteHeader(http.StatusBadRequest)
+		writeError(ctx.response, fmt.Errorf("invalid url: %w", err))
+		return false
+	}
+
+	parsedUrl, err := url.ParseRequestURI(targetUrl)
 	if err != nil {
 		ctx.response.WriteHeader(http.StatusBadRequest)
 		writeError(ctx.response, fmt.Errorf("invalid url: %w", err))

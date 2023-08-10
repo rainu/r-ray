@@ -55,8 +55,8 @@ docker run -p 8080:8080 -e "CREDENTIALS=user:secret" ghcr.io/rainu/r-ray:main
 After that you can make any request:
 
 ```bash
-# url -> query encoded url. For example: https://github.com/rainu/r-ray
-curl -v -u "user:secret" localhost:8080/?url=https%3A%2F%2Fgithub.com%2Frainu%2Fr-ray
+# path encoded url. For example: https://github.com/rainu/r-ray
+curl -v -u "user:secret" localhost:8080/https%3A%2F%2Fgithub.com%2Frainu%2Fr-ray
 ```
 
 # Documentation
@@ -86,7 +86,7 @@ curl -v -u "user:secret" localhost:8080/?url=https%3A%2F%2Fgithub.com%2Frainu%2F
  +--------+          +-------+         +--------+
 ```
 
-* The target url must be given in the `url`-query parameter. This query parameter should be encoded correctly! 
+* The target url must be given in the path. This path should be encoded correctly! 
 * The same http-method will be used for target request as the clients request is.
 * All header which have the prefix from _REQUEST_HEADER_PREFIX_ (default **R-**) will be transferred to the url's target (without the prefix).
 * If the header from _FORWARD_REQUEST_HEADER_ (default **R-Forward-Request-Header**) is sent, all request headers which match the regular expression, will be transferred to the target too
@@ -95,7 +95,7 @@ curl -v -u "user:secret" localhost:8080/?url=https%3A%2F%2Fgithub.com%2Frainu%2F
 
 
 ```
-> POST /?url=http://target.com/ HTTP/1.1
+> POST /http://target.com/ HTTP/1.1
 > User-Agent: fancy-client
 > R-Accept: money
 > R-Forward-Request-Header: user-.*

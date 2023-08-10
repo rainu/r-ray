@@ -77,7 +77,7 @@ func freePort() int {
 
 func appUrl(path string) string {
 	return fmt.Sprintf(
-		"%s?url=%s",
+		"%s%s",
 		appBaseUrl,
 		url.QueryEscape(testServer.URL+path),
 	)
