@@ -38,6 +38,9 @@ func (c CorsMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Max-Age", strconv.Itoa(c.MaxAge))
 	}
 
+	// allow the client have access to all headers
+	w.Header().Set("Access-Control-Expose-Headers", "*")
+
 	if r.Method == http.MethodOptions && r.Header.Get("Origin") != "" && r.Header.Get("Access-Control-Request-Method") != "" {
 		//this is a cors-preflight request and should not be further processed
 		return
