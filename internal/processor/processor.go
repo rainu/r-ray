@@ -14,8 +14,12 @@ type processor struct {
 
 func New(userStore UserStore) *processor {
 	return &processor{
-		httpClient: requestLogger{&http.Client{}},
-		userStore:  userStore,
+		httpClient: requestLogger{&http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}},
+		userStore: userStore,
 	}
 }
 
