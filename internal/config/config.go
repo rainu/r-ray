@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 
 type credential string
 
-type config struct {
+type Config struct {
 	BindingAddr string       `required:"false" envconfig:"BINDING_ADDRESS"`
 	Debug       bool         `required:"false" envconfig:"DEBUG"`
 	Credentials []credential `required:"false" envconfig:"CREDENTIALS"`
@@ -24,8 +24,8 @@ type config struct {
 	CorsAllowMaxAge  int      `required:"false" envconfig:"CORS_ALLOW_MAX_AGE"`
 }
 
-func readConfig() (*config, error) {
-	c := &config{
+func ReadConfig() (*Config, error) {
+	c := &Config{
 		BindingAddr:         ":8080",
 		Debug:               false,
 		RequestHeaderPrefix: "R-",

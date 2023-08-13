@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+const (
+	StatusLineHeaderSuffix = `Status-Line`
+)
+
 func (p *proxy) checkProcessingErrors(ctx *context) bool {
 	if ctx.processError != nil && errors.Is(ctx.processError, processor.ErrUnauthorized) {
 		ctx.response.WriteHeader(http.StatusUnauthorized)
@@ -59,7 +63,7 @@ func (p *proxy) transferForwardResponseHeader(ctx *context) bool {
 }
 
 func (p *proxy) transferStatusCode(ctx *context) bool {
-	ctx.response.Header()[p.headerPrefix+`Status-Line`] = []string{ctx.output.StatusLine}
+	ctx.response.Header()[p.headerPrefix+StatusLineHeaderSuffix] = []string{ctx.output.StatusLine}
 
 	return true
 }

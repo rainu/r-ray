@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/rainu/r-ray/internal/config"
 	ihttp "github.com/rainu/r-ray/internal/http"
 	"github.com/rainu/r-ray/internal/http/controller"
 	"github.com/rainu/r-ray/internal/processor"
@@ -16,7 +17,7 @@ import (
 )
 
 func main() {
-	cfg, err := readConfig()
+	cfg, err := config.ReadConfig()
 	if err != nil {
 		logrus.WithError(err).Error("Error while reading config.")
 		os.Exit(1)
@@ -34,7 +35,7 @@ func main() {
 
 	p := processor.New(userStore)
 	cors := ihttp.CorsMiddleware{
-		Delegate: controller.NewProxy(cfg.RequestHeaderPrefix, cfg.ForwardRequestHeaderPrefix, cfg.ForwardResponseHeaderPrefix, p),
+		Delegate: ihttp.NewMetaMiddleware(cfg, controller.NewProxy(cfg.RequestHeaderPrefix, cfg.ForwardRequestHeaderPrefix, cfg.ForwardResponseHeaderPrefix, p)),
 
 		Origins: cfg.CorsAllowOrigin,
 		Methods: cfg.CorsAllowMethods,
