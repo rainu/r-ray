@@ -35,7 +35,13 @@ func main() {
 
 	p := processor.New(userStore)
 	cors := ihttp.CorsMiddleware{
-		Delegate: ihttp.NewMetaMiddleware(cfg, controller.NewProxy(cfg.RequestHeaderPrefix, cfg.ForwardRequestHeaderPrefix, cfg.ForwardResponseHeaderPrefix, p)),
+		Delegate: ihttp.NewMetaMiddleware(cfg, controller.NewProxy(
+			cfg.RequestHeaderPrefix,
+			cfg.ForwardRequestHeaderPrefix,
+			cfg.ForwardResponseHeaderPrefix,
+			cfg.ForwardResponseStatusHeader,
+			p,
+		)),
 
 		Origins: cfg.CorsAllowOrigin,
 		Methods: cfg.CorsAllowMethods,

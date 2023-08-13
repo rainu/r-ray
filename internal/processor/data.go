@@ -16,6 +16,7 @@ type Input struct {
 }
 
 type Output struct {
+	StatusCode int
 	StatusLine string
 	Header     map[string][]string
 	Body       io.ReadCloser

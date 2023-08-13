@@ -69,8 +69,9 @@ curl -v -u "user:secret" localhost:8080/https%3A%2F%2Fgithub.com%2Frainu%2Fr-ray
 | BINDING_ADDRESS                | :8080                      | Specifies the TCP address for the server to listen on, in the form "host:port"                                                                      |                                                                                
 | CREDENTIALS                    |                            | Comma seperated list of credentials in the form "user:password"                                                                                     |
 | REQUEST_HEADER_PREFIX          | R-                         | All request header with that prefix will be transfer to target (without prefix). All response Header from target will be prefixed with that prefix. |
-| FORWARD_REQUEST_HEADER_REPFIX  | R-Forward-Request-Header-  | The prefix of the headers which contains the expression of the forward request headers. See below.                                                  |
+| FORWARD_REQUEST_HEADER_PREFIX  | R-Forward-Request-Header-  | The prefix of the headers which contains the expression of the forward request headers. See below.                                                  |
 | FORWARD_RESPONSE_HEADER_PREFIX | R-Forward-Response-Header- | The prefix of the headers which contains the expression of the forward response headers. See below.                                                 |
+| FORWARD_RESPONSE_STATUS_HEADER | R-Forward-Response-Status  | The name of the header which control the status code forwarding. See below.                                                                         |
 | CORS_ALLOW_ORIGIN              |                            | Comma seperated list of allowed origins. If empty: **every** origin is allowed!                                                                     |
 | CORS_ALLOW_METHODS             |                            | Comma seperated list of allowed methods. If empty: **every** method is allowed!                                                                     |
 | CORS_ALLOW_HEADERS             |                            | Comma seperated list of allowed headers. If empty: **every** header is allowed!                                                                     |
@@ -92,6 +93,7 @@ curl -v -u "user:secret" localhost:8080/https%3A%2F%2Fgithub.com%2Frainu%2Fr-ray
 * If a header with _FORWARD_REQUEST_HEADER_ (default **R-Forward-Request-Header-**) is sent, all request headers which match the regular expression, will be transferred to the target too
 * All headers from the target will be prefixed with _REQUEST_HEADER_PREFIX_ (default **R-**) and sent to the client
 * If a header with _FORWARD_RESPONSE_HEADER_ (default **R-Forward-Response-Header-**) was sent, all response headers which match the regular expression, will be transferred as is to the client
+* If the header _FORWARD_RESPONSE_STATUS_HEADER_ (default **R-Forward-Response-Status**) was sent with any value, the targets status code will be forwarded to the client.
 
 
 ```

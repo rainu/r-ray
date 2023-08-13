@@ -63,7 +63,11 @@ func (p *proxy) transferForwardResponseHeader(ctx *context) bool {
 }
 
 func (p *proxy) transferStatusCode(ctx *context) bool {
-	ctx.response.Header()[p.headerPrefix+StatusLineHeaderSuffix] = []string{ctx.output.StatusLine}
+	if ctx.forwardResponseStatus {
+		ctx.response.WriteHeader(ctx.output.StatusCode)
+	} else {
+		ctx.response.Header()[p.headerPrefix+StatusLineHeaderSuffix] = []string{ctx.output.StatusLine}
+	}
 
 	return true
 }

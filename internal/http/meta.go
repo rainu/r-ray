@@ -18,6 +18,7 @@ func NewMetaMiddleware(cfg *config.Config, delegate http.Handler) http.Handler {
 		"headerPrefix":                cfg.RequestHeaderPrefix,
 		"forwardRequestHeaderPrefix":  cfg.ForwardRequestHeaderPrefix,
 		"forwardResponseHeaderPrefix": cfg.ForwardResponseHeaderPrefix,
+		"forwardResponseStatusHeader": cfg.ForwardResponseStatusHeader,
 		"statusHeader":                cfg.RequestHeaderPrefix + controller.StatusLineHeaderSuffix,
 	})
 	if err != nil {

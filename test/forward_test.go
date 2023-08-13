@@ -59,3 +59,18 @@ func TestResponseHeaderForward(t *testing.T) {
 		headerPrefix + "Status-Line": {"HTTP/1.1 202 Accepted"}, //origin: proxy (concatenation of targets response code)
 	}), resp.Header)
 }
+
+func TestResponseStatusForward(t *testing.T) {
+	mock = func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusAccepted)
+	}
+	resp := do(validRequest(http.MethodGet, "/", map[string][]string{
+		fwdRespStatusHeader: {"1"}, //tell the server that the targets status should be forwarded
+	}, nil))
+
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	assert.Equal(t, http.Header(map[string][]string{
+		"Content-Length":                {"0"}, //origin: proxy (because the target body is less than 512b)
+		headerPrefix + "Content-Length": {"0"}, //origin: target (because the target body is less than 512b)
+	}), resp.Header)
+}

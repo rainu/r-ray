@@ -17,4 +17,5 @@ type context struct {
 
 	forwardRequestExpressions  []*regexp.Regexp
 	forwardResponseExpressions []*regexp.Regexp
+	forwardResponseStatus      bool
 }

@@ -17,6 +17,7 @@ type Config struct {
 	RequestHeaderPrefix         string `required:"false" envconfig:"REQUEST_HEADER_PREFIX"`
 	ForwardRequestHeaderPrefix  string `required:"false" envconfig:"FORWARD_REQUEST_HEADER_PREFIX"`
 	ForwardResponseHeaderPrefix string `required:"false" envconfig:"FORWARD_RESPONSE_HEADER_PREFIX"`
+	ForwardResponseStatusHeader string `required:"false" envconfig:"FORWARD_RESPONSE_STATUS_HEADER"`
 
 	CorsAllowOrigin  []string `required:"false" envconfig:"CORS_ALLOW_ORIGIN"`
 	CorsAllowMethods []string `required:"false" envconfig:"CORS_ALLOW_METHODS"`
@@ -37,6 +38,9 @@ func ReadConfig() (*Config, error) {
 	}
 	if c.ForwardResponseHeaderPrefix == "" {
 		c.ForwardResponseHeaderPrefix = c.RequestHeaderPrefix + "Forward-Response-Header-"
+	}
+	if c.ForwardResponseStatusHeader == "" {
+		c.ForwardResponseStatusHeader = c.RequestHeaderPrefix + "Forward-Response-Status"
 	}
 
 	if len(c.Credentials) == 0 {

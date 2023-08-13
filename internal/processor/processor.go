@@ -54,6 +54,7 @@ func (p *processor) Process(input Input) (Output, error) {
 		Debug("Process request done.")
 
 	return Output{
+		StatusCode: resp.StatusCode,
 		StatusLine: fmt.Sprintf("%s %s", resp.Proto, resp.Status),
 		Body:       resp.Body,
 		Header:     resp.Header,

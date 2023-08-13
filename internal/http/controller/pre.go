@@ -34,6 +34,18 @@ func (p *proxy) validateRequest(ctx *context) bool {
 	return true
 }
 
+func (p *proxy) extractAuthorization(ctx *context) bool {
+	ctx.input.User.Username, ctx.input.User.Password, _ = ctx.request.BasicAuth()
+
+	return true
+}
+
+func (p *proxy) checkForwardResponseStatus(ctx *context) bool {
+	ctx.forwardResponseStatus = ctx.request.Header.Get(p.forwardResponseStatus) != ""
+
+	return true
+}
+
 func (p *proxy) compileForwardExpressions(ctx *context) bool {
 	ctx.forwardRequestExpressions = make([]*regexp.Regexp, 0, 5)
 	for name, value := range ctx.request.Header {
@@ -66,12 +78,6 @@ func (p *proxy) compileForwardExpressions(ctx *context) bool {
 		}
 		ctx.forwardResponseExpressions = append(ctx.forwardResponseExpressions, expr)
 	}
-
-	return true
-}
-
-func (p *proxy) extractAuthorization(ctx *context) bool {
-	ctx.input.User.Username, ctx.input.User.Password, _ = ctx.request.BasicAuth()
 
 	return true
 }

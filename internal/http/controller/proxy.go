@@ -13,23 +13,26 @@ type proxy struct {
 	headerPrefix          string
 	forwardRequestHeader  string
 	forwardResponseHeader string
+	forwardResponseStatus string
 
 	preProcessing  []processingStep
 	processor      Processor
 	postProcessing []processingStep
 }
 
-func NewProxy(headerPrefix, forwardRequestHeader, forwardResponseHeader string, processor Processor) *proxy {
+func NewProxy(headerPrefix, forwardRequestHeader, forwardResponseHeader, forwardResponseStatus string, processor Processor) *proxy {
 	result := &proxy{
 		headerPrefix:          headerPrefix,
 		forwardRequestHeader:  forwardRequestHeader,
 		forwardResponseHeader: forwardResponseHeader,
+		forwardResponseStatus: forwardResponseStatus,
 
 		processor: processor,
 	}
 	result.preProcessing = []processingStep{
 		result.validateRequest,
 		result.extractAuthorization,
+		result.checkForwardResponseStatus,
 		result.compileForwardExpressions,
 		result.transferForwardRequestHeader,
 		result.transferRequestHeader,
