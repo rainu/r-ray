@@ -14,9 +14,9 @@ type config struct {
 	Debug       bool         `required:"false" envconfig:"DEBUG"`
 	Credentials []credential `required:"false" envconfig:"CREDENTIALS"`
 
-	RequestHeaderPrefix   string `required:"false" envconfig:"REQUEST_HEADER_PREFIX"`
-	ForwardRequestHeader  string `required:"false" envconfig:"FORWARD_REQUEST_HEADER"`
-	ForwardResponseHeader string `required:"false" envconfig:"FORWARD_RESPONSE_HEADER"`
+	RequestHeaderPrefix         string `required:"false" envconfig:"REQUEST_HEADER_PREFIX"`
+	ForwardRequestHeaderPrefix  string `required:"false" envconfig:"FORWARD_REQUEST_HEADER_PREFIX"`
+	ForwardResponseHeaderPrefix string `required:"false" envconfig:"FORWARD_RESPONSE_HEADER_PREFIX"`
 
 	CorsAllowOrigin  []string `required:"false" envconfig:"CORS_ALLOW_ORIGIN"`
 	CorsAllowMethods []string `required:"false" envconfig:"CORS_ALLOW_METHODS"`
@@ -32,11 +32,11 @@ func readConfig() (*config, error) {
 	}
 	err := envconfig.Process("", c)
 
-	if c.ForwardRequestHeader == "" {
-		c.ForwardRequestHeader = c.RequestHeaderPrefix + "Forward-Request-Header"
+	if c.ForwardRequestHeaderPrefix == "" {
+		c.ForwardRequestHeaderPrefix = c.RequestHeaderPrefix + "Forward-Request-Header-"
 	}
-	if c.ForwardResponseHeader == "" {
-		c.ForwardResponseHeader = c.RequestHeaderPrefix + "Forward-Response-Header"
+	if c.ForwardResponseHeaderPrefix == "" {
+		c.ForwardResponseHeaderPrefix = c.RequestHeaderPrefix + "Forward-Response-Header-"
 	}
 
 	if len(c.Credentials) == 0 {

@@ -20,9 +20,9 @@ const (
 	username = "user"
 	password = "pw"
 
-	headerPrefix  = "R-"
-	fwdReqHeader  = headerPrefix + "Forward-Request"
-	fwdRespHeader = headerPrefix + "Forward-Response"
+	headerPrefix        = "R-"
+	fwdReqHeaderPrefix  = headerPrefix + "Forward-Request-"
+	fwdRespHeaderPrefix = headerPrefix + "Forward-Response-"
 )
 
 var (
@@ -49,7 +49,7 @@ func init() {
 	userStore.Add(username, password)
 
 	p := processor.New(userStore)
-	h := controller.NewProxy(headerPrefix, fwdReqHeader, fwdRespHeader, p)
+	h := controller.NewProxy(headerPrefix, fwdReqHeaderPrefix, fwdRespHeaderPrefix, p)
 	toTest := ihttp.NewServer(fmt.Sprintf(":%d", appPort), h)
 	shutdowner = toTest
 

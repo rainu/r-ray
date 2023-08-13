@@ -13,8 +13,8 @@ func TestRequestHeaderForward(t *testing.T) {
 		w.WriteHeader(http.StatusAccepted)
 	}
 	resp := do(validRequest(http.MethodGet, "/", map[string][]string{
-		"Hello":      {"hello to proxy"}, //this should be forwarded because of forward header (not header-prefix)
-		fwdReqHeader: {`^he.*`},          //regex which should match
+		"Hello":                  {"hello to proxy"}, //this should be forwarded because of forward header (not header-prefix)
+		fwdReqHeaderPrefix + "0": {`^he.*`},          //regex which should match
 	}, nil))
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "The proxies return code should always be 200 in happy case.")
@@ -32,9 +32,9 @@ func TestRequestHeaderForward_LowerThanDedicated(t *testing.T) {
 		w.WriteHeader(http.StatusAccepted)
 	}
 	resp := do(validRequest(http.MethodGet, "/", map[string][]string{
-		"Hello":                {"hello to proxy"},  //this should not be forwarded because there is a dedicated header
-		fwdReqHeader:           {`^he.*`},           //regex which should match
-		headerPrefix + "Hello": {"hello to target"}, //this header should be used!
+		"Hello":                  {"hello to proxy"},  //this should not be forwarded because there is a dedicated header
+		fwdReqHeaderPrefix + "0": {`^he.*`},           //regex which should match
+		headerPrefix + "Hello":   {"hello to target"}, //this header should be used!
 	}, nil))
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "The proxies return code should always be 200 in happy case.")
@@ -50,7 +50,7 @@ func TestResponseHeaderForward(t *testing.T) {
 		w.WriteHeader(http.StatusAccepted)
 	}
 	resp := do(validRequest(http.MethodGet, "/", map[string][]string{
-		fwdRespHeader: {`^content-.*`},
+		fwdRespHeaderPrefix + "0": {`^content-.*`},
 	}, nil))
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "The proxies return code should always be 200 in happy case.")

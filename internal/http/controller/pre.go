@@ -35,30 +35,36 @@ func (p *proxy) validateRequest(ctx *context) bool {
 }
 
 func (p *proxy) compileForwardExpressions(ctx *context) bool {
-	rawAllowExpressions := ctx.request.Header.Values(p.forwardRequestHeader)
-	ctx.forwardRequestExpressions = make([]*regexp.Regexp, len(rawAllowExpressions))
+	ctx.forwardRequestExpressions = make([]*regexp.Regexp, 0, 5)
+	for name, value := range ctx.request.Header {
+		if !strings.HasPrefix(strings.ToLower(name), strings.ToLower(p.forwardRequestHeader)) {
+			//skip headers with no prefix
+			continue
+		}
 
-	for i, expr := range rawAllowExpressions {
-		var err error
-		ctx.forwardRequestExpressions[i], err = regexp.Compile(expr)
+		expr, err := regexp.Compile(strings.Join(value, " "))
 		if err != nil {
 			ctx.response.WriteHeader(http.StatusBadRequest)
 			writeError(ctx.response, fmt.Errorf("invalid forward request header expression: %w", err))
 			return false
 		}
+		ctx.forwardRequestExpressions = append(ctx.forwardRequestExpressions, expr)
 	}
 
-	rawAllowExpressions = ctx.request.Header.Values(p.forwardResponseHeader)
-	ctx.forwardResponseExpressions = make([]*regexp.Regexp, len(rawAllowExpressions))
+	ctx.forwardResponseExpressions = make([]*regexp.Regexp, 0, 5)
+	for name, value := range ctx.request.Header {
+		if !strings.HasPrefix(strings.ToLower(name), strings.ToLower(p.forwardResponseHeader)) {
+			//skip headers with no prefix
+			continue
+		}
 
-	for i, expr := range rawAllowExpressions {
-		var err error
-		ctx.forwardResponseExpressions[i], err = regexp.Compile(expr)
+		expr, err := regexp.Compile(strings.Join(value, " "))
 		if err != nil {
 			ctx.response.WriteHeader(http.StatusBadRequest)
 			writeError(ctx.response, fmt.Errorf("invalid forward response header expression: %w", err))
 			return false
 		}
+		ctx.forwardResponseExpressions = append(ctx.forwardResponseExpressions, expr)
 	}
 
 	return true
@@ -74,6 +80,15 @@ func (p *proxy) transferRequestHeader(ctx *context) bool {
 	for name, values := range ctx.request.Header {
 		if !strings.HasPrefix(strings.ToLower(name), strings.ToLower(p.headerPrefix)) {
 			//skip headers with no prefix
+			continue
+		}
+
+		if strings.HasPrefix(strings.ToLower(name), strings.ToLower(p.forwardRequestHeader)) {
+			//skip special header
+			continue
+		}
+		if strings.HasPrefix(strings.ToLower(name), strings.ToLower(p.forwardResponseHeader)) {
+			//skip special header
 			continue
 		}
 
