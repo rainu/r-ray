@@ -9,9 +9,42 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-lambda
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          file: Dockerfile.lambda
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
   terraform:
     name: Terraform Validation and Build
     runs-on: ubuntu-latest
+    needs: build-and-push-image
 
     steps:
       - uses: actions/checkout@v2.5.0
@@ -26,6 +59,8 @@ jobs:
         uses: hashicorp/setup-terraform@v2.0.3
 
       - name: Terraform init, plan and apply
+        env:
+          TF_VAR_LAMBDA_DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-lambda:${{ github.ref_name}}
         run: |
           cd terraform
 
