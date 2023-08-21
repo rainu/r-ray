@@ -8,5 +8,15 @@ variable "LAMBDA_DOCKER_IMAGE" {
 
 module "lambda" {
   source = "./lambda"
+
   docker_image = var.LAMBDA_DOCKER_IMAGE
+}
+
+variable "ECR_REPOSITORY_NAME" {
+  description = "The name of the ecr repository"
+}
+
+module "ecr" {
+  source = "./ecr"
+  repository_name = var.ECR_REPOSITORY_NAME
 }
