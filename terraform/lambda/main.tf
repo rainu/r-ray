@@ -21,7 +21,7 @@ variable "docker_image" {
 }
 
 resource "aws_lambda_function" "_" {
-  function_name = "r-ray-lambda"
+  function_name = "r-ray"
   role          = aws_iam_role.iam_for_lambda.arn
 
   image_uri     = var.docker_image

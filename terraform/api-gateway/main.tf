@@ -1,4 +1,4 @@
 resource "aws_apigatewayv2_api" "_" {
-  name = "r-ray-api-gateway"
+  name = "r-ray"
   protocol_type = "HTTP"
 }

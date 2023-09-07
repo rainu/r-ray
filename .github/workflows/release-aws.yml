@@ -10,9 +10,10 @@ jobs:
     name: Terraform Validation and Build
     runs-on: ubuntu-latest
     env:
-      TF_VAR_ECR_REPOSITORY_NAME: ${{ github.repository }}
-      TF_VAR_LAMBDA_DOCKER_IMAGE: UNSET
+      DOCKER_IMAGE_NAME: ${{ github.event.repository.name }}
       DOCKER_IMAGE_TAG: ${{ github.ref_name }}-${{ github.sha }}
+      TF_VAR_ECR_REPOSITORY_NAME: ${{ github.event.repository.name }}
+      TF_VAR_LAMBDA_DOCKER_IMAGE: UNSET
 
     steps:
       - uses: actions/checkout@v2.5.0
@@ -42,25 +43,24 @@ jobs:
           cd terraform
 
           echo "** Running Terraform Apply**"
-          terraform apply -target=module.ecr
+          terraform apply -target=module.ecr -auto-approve
 
-      - name: Login to Amazon ECR Public
-        id: login-ecr-public
+      - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         with:
           mask-password: 'true'
 
-      - name: Build, tag, and push docker image to Amazon ECR Public
+      - name: Build, tag, and push docker image to Amazon private ECR
         env:
-          REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
-          REPOSITORY: ${{ github.repository }}
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker build -t $REGISTRY/$REPOSITORY:$DOCKER_IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$DOCKER_IMAGE_TAG
+          docker build -f lambda.dockerfile -t $REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .
+          docker push $REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
 
       - name: Terraform init, plan and apply
         env:
-          TF_VAR_LAMBDA_DOCKER_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ github.repository }}:$DOCKER_IMAGE_TAG
+          TF_VAR_LAMBDA_DOCKER_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
         run: |
           cd terraform
 
