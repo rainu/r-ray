@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/rainu/r-ray/internal/config"
@@ -10,8 +13,10 @@ import (
 	"github.com/rainu/r-ray/internal/processor"
 	"github.com/rainu/r-ray/internal/store"
 	"github.com/sirupsen/logrus"
+	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -54,35 +59,66 @@ func main() {
 var proxy http.Handler
 
 func handle(ctx context.Context, request events.APIGatewayV2HTTPRequest) (any, error) {
-	//httpReq, err := http.NewRequestWithContext(
-	//	ctx,
-	//	request.RequestContext.HTTP.Method,
-	//	path.Join("https://lambda.aws.com", request.RawPath),
-	//	strings.NewReader(request.Body),
-	//)
-	//
-	//if err != nil {
-	//	return nil, fmt.Errorf("unable to build request: %w", err)
-	//}
-	//
-	//for hName, hValues := range request.Headers {
-	//	httpReq.Header.Set(hName, hValues)
-	//	httpReq.Header.Add()
-	//}
-	//
-	//
-	//request.Headers
-	//
-	//
-	//httpResp := httptest.NewRecorder()
-	//
-	//proxy.ServeHTTP(httpResp, httpReq)
-	//
-	//return events.ApiResp
+	var body io.Reader = strings.NewReader(request.Body)
+	if request.IsBase64Encoded {
+		body = base64.NewDecoder(base64.StdEncoding, body)
+	}
 
-	logrus.WithField("request", request).Info("Call")
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		request.RequestContext.HTTP.Method,
+		fmt.Sprintf("https://lambda.aws.com%s?%s", request.RawPath, request.RawQueryString),
+		body,
+	)
 
-	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusOK,
-	}, nil
+	if err != nil {
+		return nil, fmt.Errorf("unable to build request: %w", err)
+	}
+
+	for hName, hValues := range request.Headers {
+		httpReq.Header.Add(hName, hValues)
+	}
+	for _, value := range request.Cookies {
+		httpReq.Header.Add("Cookie", value)
+	}
+
+	httpResp := newRecorder()
+	proxy.ServeHTTP(httpResp, httpReq)
+	httpResp.b64.Close()
+
+	response := events.APIGatewayV2HTTPResponse{
+		StatusCode:        httpResp.status,
+		MultiValueHeaders: httpResp.Header(),
+		Body:              httpResp.buffer.String(),
+		IsBase64Encoded:   true,
+	}
+	return response, nil
+}
+
+type responseRecorder struct {
+	header http.Header
+	status int
+	buffer *bytes.Buffer
+	b64    io.WriteCloser
+}
+
+func newRecorder() responseRecorder {
+	result := responseRecorder{
+		buffer: bytes.NewBuffer(nil),
+	}
+	result.b64 = base64.NewEncoder(base64.StdEncoding, result.buffer)
+
+	return result
+}
+
+func (r responseRecorder) Header() http.Header {
+	return r.header
+}
+
+func (r responseRecorder) Write(bytes []byte) (int, error) {
+	return r.b64.Write(bytes)
+}
+
+func (r responseRecorder) WriteHeader(statusCode int) {
+	r.status = statusCode
 }
