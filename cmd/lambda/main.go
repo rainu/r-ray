@@ -59,6 +59,8 @@ func main() {
 var proxy http.Handler
 
 func handle(ctx context.Context, request events.APIGatewayV2HTTPRequest) (any, error) {
+	logrus.WithField("request", request).Info("Call")
+
 	var body io.Reader = strings.NewReader(request.Body)
 	if request.IsBase64Encoded {
 		body = base64.NewDecoder(base64.StdEncoding, body)
@@ -86,13 +88,12 @@ func handle(ctx context.Context, request events.APIGatewayV2HTTPRequest) (any, e
 	proxy.ServeHTTP(httpResp, httpReq)
 	httpResp.b64.Close()
 
-	response := events.APIGatewayV2HTTPResponse{
+	return events.APIGatewayV2HTTPResponse{
 		StatusCode:        httpResp.status,
 		MultiValueHeaders: httpResp.Header(),
 		Body:              httpResp.buffer.String(),
 		IsBase64Encoded:   true,
-	}
-	return response, nil
+	}, nil
 }
 
 type responseRecorder struct {
@@ -104,6 +105,7 @@ type responseRecorder struct {
 
 func newRecorder() responseRecorder {
 	result := responseRecorder{
+		header: map[string][]string{},
 		buffer: bytes.NewBuffer(nil),
 	}
 	result.b64 = base64.NewEncoder(base64.StdEncoding, result.buffer)
