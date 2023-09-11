@@ -82,5 +82,7 @@ func handle(ctx context.Context, request events.APIGatewayV2HTTPRequest) (any, e
 
 	logrus.WithField("request", request).Info("Call")
 
-	return events.APIGatewayProxyResponse{}, nil
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+	}, nil
 }
